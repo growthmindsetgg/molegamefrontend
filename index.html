@@ -285,4 +285,28 @@ window.addEventListener("pointerdown",(e)=>{
   score++;
   scoreEl.textContent="score: "+score;
   active.material.map = hitTex;
-  active.
+  active.scale.set(1.6,1.4,1);
+
+  setTimeout(()=>{
+    active.scale.set(1.8,1.8,1);
+    hideMoles();
+  },180);
+});
+
+/* ---------- LOOP ---------- */
+
+function animate(){
+  requestAnimationFrame(animate);
+  updateMoles();
+  renderer.render(scene,camera);
+}
+animate();
+
+window.addEventListener("resize",()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+</script>
+</body>
+</html>
