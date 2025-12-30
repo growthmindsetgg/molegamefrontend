@@ -1,0 +1,28 @@
+{
+  "accountAssociation": {
+    "header": "",
+    "payload": "",
+    "signature": ""
+  },
+  "miniapp": {
+    "version": "1",
+    "name": "Mole Smash",
+    "subtitle": "30s reflex game",
+    "description": "Smash the mole, beat your score. No wallet. Just play.",
+    "homeUrl": "https://molegamebaseapp.vercel.app/",
+    "iconUrl": "https://molegamebaseapp.vercel.app/assets/icon.png",
+    "splashImageUrl": "https://molegamebaseapp.vercel.app/assets/splash.png",
+    "splashBackgroundColor": "#87ceeb",
+    "heroImageUrl": "https://molegamebaseapp.vercel.app/assets/hero.png",
+    "screenshotUrls": [
+      "https://molegamebaseapp.vercel.app/assets/screenshot-portrait.png"
+    ],
+    "primaryCategory": "games",
+    "tags": ["game", "arcade", "mole", "reflex", "base"],
+    "tagline": "Hit fast. Score higher.",
+    "ogTitle": "Mole Smash",
+    "ogDescription": "30 seconds. Tap fast. Beat your score.",
+    "ogImageUrl": "https://molegamebaseapp.vercel.app/assets/hero.png",
+    "noindex": true
+  }
+}
