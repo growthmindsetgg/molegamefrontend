@@ -1,9 +1,9 @@
 {
   "accountAssociation": {
-    "header": "",
-    "payload": "",
-    "signature": ""
-  },
+    "header": "eyJmaWQiOjM0MzkzOCwidHlwZSI6ImF1dGgiLCJrZXkiOiIweDdjRjIxNGVDOTIyNzlFN0MwNkQ3ZDcyYTliNDAyZmI1MjllMzk0RDcifQ",
+    "payload": "eyJkb21haW4iOiJtb2xlZ2FtZWJhc2VhcHAudmVyY2VsLmFwcCJ9",
+    "signature": "lkKZAnrE87E4Nu6+w3PoJPJT2x8BDuZIdpn2kJZG+DFSK0hO1SogqnKNjeR2Q3TJj7sAsVbJ/RKoSman4asxLRw="
+  }
   "miniapp": {
     "version": "1",
     "name": "Mole Smash",
