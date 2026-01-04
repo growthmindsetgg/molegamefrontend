@@ -13,14 +13,19 @@
   <meta property="og:image" content="https://molegamebaseapp.vercel.app/assets/hero.png" />
   <meta property="og:url" content="https://molegamebaseapp.vercel.app/" />
 
-  <!-- Farcaster Frame (works for link preview + Frame clients) -->
+  <!-- Farcaster Mini App metadata -->
+  <meta property="fc:miniapp" content="true" />
+  <meta property="fc:miniapp:name" content="Mole Smash" />
+  <meta property="fc:miniapp:icon" content="https://molegamebaseapp.vercel.app/assets/icon.png" />
+
+  <!-- Farcaster Frame (preview only, not gameplay) -->
   <meta property="fc:frame" content="vNext" />
   <meta property="fc:frame:image" content="https://molegamebaseapp.vercel.app/assets/hero.png" />
   <meta property="fc:frame:button:1" content="Play" />
   <meta property="fc:frame:button:1:action" content="link" />
-  <meta property="fc:frame:button:1:target" content="https://molegamebaseapp.vercel.app/" />
+  <meta property="fc:frame:button:1:target" content="https://molegamebaseapp.vercel.app/?fc=1" />
 
-  <title>mole game</title>
+  <title>Mole Smash</title>
 
   <style>
     body {
@@ -28,6 +33,10 @@
       overflow: hidden;
       background: #87ceeb;
       font-family: system-ui, sans-serif;
+    }
+
+    body.farcaster {
+      overflow: hidden;
     }
 
     #hud {
@@ -117,6 +126,20 @@
 
 <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
 <script>
+/* ---------- RUNTIME DETECTION ---------- */
+
+const params = new URLSearchParams(window.location.search);
+const IS_FARCASTER = params.has("fc");
+const IS_IFRAME = window.parent !== window;
+
+if (IS_FARCASTER) {
+  document.body.classList.add("farcaster");
+}
+
+if (IS_FARCASTER && IS_IFRAME) {
+  window.parent.postMessage({ type: "miniapp:ready" }, "*");
+}
+
 /* ---------- SPRITES ---------- */
 
 function tex(svg) {
@@ -271,7 +294,7 @@ function updateMoles(){
   });
 }
 
-/* ---------- SCREEN → WORLD ---------- */
+/* ---------- HIT TEST ---------- */
 
 function screenToWorld(x, y) {
   const v = new THREE.Vector3(
@@ -285,16 +308,10 @@ function screenToWorld(x, y) {
   return camera.position.clone().add(dir.multiplyScalar(dist));
 }
 
-/* ---------- HIT TEST ---------- */
-
-function isHitMole(worldPoint, moleSprite) {
-  if(!moleSprite) return false;
-  if(moleSprite.position.y < (moleSprite.userData.shown - 0.05)) return false;
-
-  const dx = worldPoint.x - moleSprite.position.x;
-  const dz = worldPoint.z - moleSprite.position.z;
-  const r = 1.05;
-  return (dx*dx + dz*dz) <= (r*r);
+function isHitMole(p, m) {
+  if(!m || m.position.y < 0.45) return false;
+  const dx=p.x-m.position.x, dz=p.z-m.position.z;
+  return dx*dx+dz*dz <= 1.05*1.05;
 }
 
 /* ---------- INPUT ---------- */
@@ -304,22 +321,19 @@ window.addEventListener("pointerdown",(e)=>{
 
   const p = screenToWorld(e.clientX, e.clientY);
 
-  hammer.position.set(p.x, 1.2, p.z);
-  hammer.rotation.z = -Math.PI/3;
-  hammer.visible = true;
+  hammer.position.set(p.x,1.2,p.z);
+  hammer.rotation.z=-Math.PI/3;
+  hammer.visible=true;
 
-  setTimeout(()=>hammer.rotation.z = 0, 40);
-  setTimeout(()=>hammer.visible = false, 120);
+  setTimeout(()=>hammer.rotation.z=0,40);
+  setTimeout(()=>hammer.visible=false,120);
 
-  if(active && isHitMole(p, active)) {
+  if(active && isHitMole(p,active)){
     score++;
     scoreEl.textContent="score: "+score;
-    active.material.map = hitTex;
+    active.material.map=hitTex;
     active.scale.set(1.6,1.4,1);
-    setTimeout(()=>{
-      if(active) active.scale.set(1.8,1.8,1);
-      hideMoles();
-    },180);
+    setTimeout(hideMoles,180);
   }
 });
 

@@ -1,0 +1,7 @@
+{
+  "name": "Mole Smash",
+  "description": "30 seconds. Tap fast. Beat your score.",
+  "icon": "https://molegamebaseapp.vercel.app/assets/icon.png",
+  "entry": "https://molegamebaseapp.vercel.app/?fc=1",
+  "permissions": []
+}
