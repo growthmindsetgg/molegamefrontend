@@ -90,6 +90,24 @@
 
 <body>
 
+<script>
+/* ---------- FARCASTER READY: MUST BE FIRST ---------- */
+(function () {
+  try {
+    const sdk =
+      window.sdk ||
+      window.farcaster?.sdk ||
+      window.parent?.sdk ||
+      window.top?.sdk;
+
+    if (sdk && sdk.actions && sdk.actions.ready) {
+      sdk.actions.ready();
+    }
+  } catch (e) {}
+})();
+</script>
+
+
 <div id="hud">
   <div id="score">score: 0</div>
   <div id="time">time: 30</div>
