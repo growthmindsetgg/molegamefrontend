@@ -126,15 +126,53 @@
 <script src="https://unpkg.com/@farcaster/miniapp-sdk/dist/index.umd.js"></script>
 
 <script>
-/* ---------- FARCASTER READY ---------- */
-(function waitForFarcasterSDK() {
-  try {
-    if (window.sdk && window.sdk.actions && typeof window.sdk.actions.ready === "function") {
-      window.sdk.actions.ready();
-    } else {
-      setTimeout(waitForFarcasterSDK, 50);
+/* ---------- FARCASTER READY (SAFE, NO GAME CHANGES) ---------- */
+(function initMiniAppReady() {
+  function resolveSdk() {
+    const candidates = [
+      window.sdk,
+      window.miniappSdk,
+      window.miniAppSdk,
+      window.farcasterMiniappSdk,
+      window.farcasterMiniAppSdk,
+      window.FarcasterMiniappSdk,
+      window.FarcasterMiniAppSdk,
+      window.farcaster && window.farcaster.sdk,
+      window.farcaster && window.farcaster.miniappSdk,
+      window.farcaster && window.farcaster.miniAppSdk
+    ];
+
+    for (const c of candidates) {
+      if (!c) continue;
+      if (c.actions && typeof c.actions.ready === "function") return c;
+      if (c.sdk && c.sdk.actions && typeof c.sdk.actions.ready === "function") return c.sdk;
+      if (c.default && c.default.actions && typeof c.default.actions.ready === "function") return c.default;
+      if (c.default && c.default.sdk && c.default.sdk.actions && typeof c.default.sdk.actions.ready === "function") return c.default.sdk;
     }
-  } catch {}
+
+    return null;
+  }
+
+  function callReadyWhenAvailable() {
+    let tries = 0;
+    const maxTries = 60; // 6 seconds
+    const delayMs = 100;
+
+    const tick = () => {
+      tries++;
+      const s = resolveSdk();
+      if (s) {
+        try { s.actions.ready(); } catch (e) {}
+        return;
+      }
+      if (tries < maxTries) setTimeout(tick, delayMs);
+    };
+
+    tick();
+  }
+
+  if (document.readyState === "complete") callReadyWhenAvailable();
+  else window.addEventListener("load", callReadyWhenAvailable);
 })();
 
 /* ---------- SPRITES ---------- */
