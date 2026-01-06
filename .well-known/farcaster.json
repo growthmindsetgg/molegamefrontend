@@ -10,6 +10,7 @@
     "subtitle": "30s reflex game",
     "description": "Smash the mole, beat your score. No wallet. Just play.",
     "homeUrl": "https://molesmash-mini.vercel.app/",
+    "castShareUrl": "https://molesmash-mini.vercel.app/",
     "iconUrl": "https://molesmash-mini.vercel.app/assets/icon.png",
     "splashImageUrl": "https://molesmash-mini.vercel.app/assets/splash.png",
     "splashBackgroundColor": "#87ceeb",
