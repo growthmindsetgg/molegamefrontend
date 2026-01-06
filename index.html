@@ -10,20 +10,20 @@
   <!-- Open Graph -->
   <meta property="og:title" content="Mole Smash" />
   <meta property="og:description" content="30 seconds. Tap fast. Beat your score." />
-  <meta property="og:image" content="https://molegamebaseapp.vercel.app/assets/hero.png" />
-  <meta property="og:url" content="https://molegamebaseapp.vercel.app/" />
+  <meta property="og:image" content="https://molesmash-mini.vercel.app/assets/hero.png" />
+  <meta property="og:url" content="https://molesmash-mini.vercel.app/" />
 
   <!-- Farcaster Mini App metadata -->
   <meta property="fc:miniapp" content="true" />
   <meta property="fc:miniapp:name" content="Mole Smash" />
-  <meta property="fc:miniapp:icon" content="https://molegamebaseapp.vercel.app/assets/icon.png" />
+  <meta property="fc:miniapp:icon" content="https://molesmash-mini.vercel.app/assets/icon.png" />
 
-  <!-- Farcaster Frame (preview only, not gameplay) -->
+  <!-- Farcaster Frame (preview only) -->
   <meta property="fc:frame" content="vNext" />
-  <meta property="fc:frame:image" content="https://molegamebaseapp.vercel.app/assets/hero.png" />
+  <meta property="fc:frame:image" content="https://molesmash-mini.vercel.app/assets/hero.png" />
   <meta property="fc:frame:button:1" content="Play" />
   <meta property="fc:frame:button:1:action" content="link" />
-  <meta property="fc:frame:button:1:target" content="https://molegamebaseapp.vercel.app/?fc=1" />
+  <meta property="fc:frame:button:1:target" content="https://molesmash-mini.vercel.app/?fc=1" />
 
   <title>Mole Smash</title>
 
@@ -33,10 +33,6 @@
       overflow: hidden;
       background: #87ceeb;
       font-family: system-ui, sans-serif;
-    }
-
-    body.farcaster {
-      overflow: hidden;
     }
 
     #hud {
@@ -124,24 +120,19 @@
   </div>
 </div>
 
+<!-- Farcaster Mini App SDK -->
+<script src="https://unpkg.com/@farcaster/miniapp-sdk/dist/index.umd.js"></script>
 <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
+
 <script>
-/* ---------- RUNTIME DETECTION ---------- */
-
-const params = new URLSearchParams(window.location.search);
-const IS_FARCASTER = params.has("fc");
-const IS_IFRAME = window.parent !== window;
-
-if (IS_FARCASTER) {
-  document.body.classList.add("farcaster");
-}
-
-if (IS_FARCASTER && IS_IFRAME) {
-  window.parent.postMessage({ type: "miniapp:ready" }, "*");
-}
+/* ---------- FARCASTER READY ---------- */
+window.addEventListener("load", () => {
+  if (window.farcaster?.miniapp) {
+    window.farcaster.miniapp.actions.ready();
+  }
+});
 
 /* ---------- SPRITES ---------- */
-
 function tex(svg) {
   return new THREE.TextureLoader().load(
     "data:image/svg+xml;base64," + btoa(svg)
@@ -173,7 +164,6 @@ const hammerTex = tex(`
 </svg>`);
 
 /* ---------- SCENE ---------- */
-
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 100);
 camera.position.set(0,6,8);
@@ -196,7 +186,6 @@ ground.rotation.x = -Math.PI/2;
 scene.add(ground);
 
 /* ---------- MOLES ---------- */
-
 const moles = [];
 [-3,0,3].forEach(x=>{
   const hole = new THREE.Mesh(
@@ -215,14 +204,12 @@ const moles = [];
 });
 
 /* ---------- HAMMER ---------- */
-
 const hammer = new THREE.Sprite(new THREE.SpriteMaterial({map:hammerTex}));
 hammer.scale.set(1.4,1.4,1);
 hammer.visible = false;
 scene.add(hammer);
 
 /* ---------- GAME STATE ---------- */
-
 let active=null, score=0, time=30, running=false;
 let moleLoop, timeLoop;
 
@@ -230,7 +217,6 @@ const scoreEl = document.getElementById("score");
 const timeEl = document.getElementById("time");
 
 /* ---------- GAME FLOW ---------- */
-
 function startGame(){
   document.getElementById("menu").style.display="none";
   score=0; time=30; running=true;
@@ -259,15 +245,10 @@ function restartGame(){
   startGame();
 }
 
-function showRules(){
-  document.getElementById("rules").style.display="flex";
-}
-function hideRules(){
-  document.getElementById("rules").style.display="none";
-}
+function showRules(){ document.getElementById("rules").style.display="flex"; }
+function hideRules(){ document.getElementById("rules").style.display="none"; }
 
-/* ---------- MOLE MOTION ---------- */
-
+/* ---------- MOLE LOGIC ---------- */
 function hideMoles(){
   moles.forEach(m=>{
     m.userData.vy=-0.02;
@@ -276,12 +257,14 @@ function hideMoles(){
   });
   active=null;
 }
+
 function showMole(){
   if(!running) return;
   hideMoles();
   active=moles[Math.floor(Math.random()*3)];
   active.userData.vy=0.04;
 }
+
 function updateMoles(){
   moles.forEach(m=>{
     if(m.userData.vy!==0){
@@ -294,33 +277,18 @@ function updateMoles(){
   });
 }
 
-/* ---------- HIT TEST ---------- */
-
-function screenToWorld(x, y) {
-  const v = new THREE.Vector3(
-    (x / innerWidth) * 2 - 1,
-    -(y / innerHeight) * 2 + 1,
-    0.5
-  );
+/* ---------- INPUT ---------- */
+function screenToWorld(x,y){
+  const v=new THREE.Vector3((x/innerWidth)*2-1,-(y/innerHeight)*2+1,0.5);
   v.unproject(camera);
-  const dir = v.sub(camera.position).normalize();
-  const dist = -camera.position.y / dir.y;
+  const dir=v.sub(camera.position).normalize();
+  const dist=-camera.position.y/dir.y;
   return camera.position.clone().add(dir.multiplyScalar(dist));
 }
 
-function isHitMole(p, m) {
-  if(!m || m.position.y < 0.45) return false;
-  const dx=p.x-m.position.x, dz=p.z-m.position.z;
-  return dx*dx+dz*dz <= 1.05*1.05;
-}
-
-/* ---------- INPUT ---------- */
-
 window.addEventListener("pointerdown",(e)=>{
   if(!running) return;
-
-  const p = screenToWorld(e.clientX, e.clientY);
-
+  const p=screenToWorld(e.clientX,e.clientY);
   hammer.position.set(p.x,1.2,p.z);
   hammer.rotation.z=-Math.PI/3;
   hammer.visible=true;
@@ -328,17 +296,19 @@ window.addEventListener("pointerdown",(e)=>{
   setTimeout(()=>hammer.rotation.z=0,40);
   setTimeout(()=>hammer.visible=false,120);
 
-  if(active && isHitMole(p,active)){
-    score++;
-    scoreEl.textContent="score: "+score;
-    active.material.map=hitTex;
-    active.scale.set(1.6,1.4,1);
-    setTimeout(hideMoles,180);
+  if(active && active.position.y>0.45){
+    const dx=p.x-active.position.x, dz=p.z-active.position.z;
+    if(dx*dx+dz*dz<=1.05*1.05){
+      score++;
+      scoreEl.textContent="score: "+score;
+      active.material.map=hitTex;
+      active.scale.set(1.6,1.4,1);
+      setTimeout(hideMoles,180);
+    }
   }
 });
 
 /* ---------- LOOP ---------- */
-
 function animate(){
   requestAnimationFrame(animate);
   updateMoles();
