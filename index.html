@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -23,7 +23,7 @@
   <meta property="fc:frame:image" content="https://molesmash-mini.vercel.app/assets/hero.png" />
   <meta property="fc:frame:button:1" content="Play" />
   <meta property="fc:frame:button:1:action" content="link" />
-  <meta property="fc:frame:button:1:target" content="https://molesmash-mini.vercel.app/?fc=1" />
+  <meta property="fc:frame:button:1:target" content="https://molesmash-mini.vercel.app/" />
 
   <title>Mole Smash</title>
 
@@ -120,19 +120,24 @@
   </div>
 </div>
 
-<!-- Farcaster Mini App SDK -->
-<script src="https://unpkg.com/@farcaster/miniapp-sdk/dist/index.umd.js"></script>
 <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
 
 <script>
-/* ---------- FARCASTER READY ---------- */
-window.addEventListener("load", () => {
-  if (window.farcaster?.miniapp) {
-    window.farcaster.miniapp.actions.ready();
+/* ---------- FARCASTER READY (THE FIX) ---------- */
+
+function farcasterReady() {
+  if (window.FarcasterMiniApp?.actions?.ready) {
+    window.FarcasterMiniApp.actions.ready();
+    console.log("Farcaster Mini App ready()");
   }
+}
+
+window.addEventListener("load", () => {
+  setTimeout(farcasterReady, 300);
 });
 
 /* ---------- SPRITES ---------- */
+
 function tex(svg) {
   return new THREE.TextureLoader().load(
     "data:image/svg+xml;base64," + btoa(svg)
@@ -164,163 +169,191 @@ const hammerTex = tex(`
 </svg>`);
 
 /* ---------- SCENE ---------- */
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 100);
-camera.position.set(0,6,8);
-camera.lookAt(0,0,0);
 
-const renderer = new THREE.WebGLRenderer({antialias:true});
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 100);
+camera.position.set(0, 6, 8);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
 
-scene.add(new THREE.AmbientLight(0xffffff,0.6));
-const light = new THREE.DirectionalLight(0xffffff,1);
-light.position.set(5,10,5);
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(5, 10, 5);
 scene.add(light);
 
 const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(12,12),
-  new THREE.MeshStandardMaterial({color:0x4caf50})
+  new THREE.PlaneGeometry(12, 12),
+  new THREE.MeshStandardMaterial({ color: 0x4caf50 })
 );
-ground.rotation.x = -Math.PI/2;
+ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
 
 /* ---------- MOLES ---------- */
+
 const moles = [];
-[-3,0,3].forEach(x=>{
+[-3, 0, 3].forEach(x => {
   const hole = new THREE.Mesh(
-    new THREE.CylinderGeometry(1,1,0.2,32),
-    new THREE.MeshStandardMaterial({color:0x000000})
+    new THREE.CylinderGeometry(1, 1, 0.2, 32),
+    new THREE.MeshStandardMaterial({ color: 0x000000 })
   );
-  hole.position.set(x,0.1,0);
+  hole.position.set(x, 0.1, 0);
   scene.add(hole);
 
-  const m = new THREE.Sprite(new THREE.SpriteMaterial({map:moleTex}));
-  m.scale.set(1.8,1.8,1);
-  m.position.set(x,-0.6,0);
-  m.userData = { hidden:-0.6, shown:0.5, vy:0 };
+  const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: moleTex }));
+  m.scale.set(1.8, 1.8, 1);
+  m.position.set(x, -0.6, 0);
+  m.userData = { hidden: -0.6, shown: 0.5, vy: 0 };
   scene.add(m);
   moles.push(m);
 });
 
 /* ---------- HAMMER ---------- */
-const hammer = new THREE.Sprite(new THREE.SpriteMaterial({map:hammerTex}));
-hammer.scale.set(1.4,1.4,1);
+
+const hammer = new THREE.Sprite(new THREE.SpriteMaterial({ map: hammerTex }));
+hammer.scale.set(1.4, 1.4, 1);
 hammer.visible = false;
 scene.add(hammer);
 
 /* ---------- GAME STATE ---------- */
-let active=null, score=0, time=30, running=false;
+
+let active = null;
+let score = 0;
+let time = 30;
+let running = false;
 let moleLoop, timeLoop;
 
 const scoreEl = document.getElementById("score");
 const timeEl = document.getElementById("time");
 
 /* ---------- GAME FLOW ---------- */
-function startGame(){
-  document.getElementById("menu").style.display="none";
-  score=0; time=30; running=true;
-  scoreEl.textContent="score: 0";
-  timeEl.textContent="time: 30";
 
-  moleLoop=setInterval(showMole,1000);
-  timeLoop=setInterval(()=>{
+function startGame() {
+  document.getElementById("menu").style.display = "none";
+  score = 0;
+  time = 30;
+  running = true;
+  scoreEl.textContent = "score: 0";
+  timeEl.textContent = "time: 30";
+
+  moleLoop = setInterval(showMole, 1000);
+  timeLoop = setInterval(() => {
     time--;
-    timeEl.textContent="time: "+time;
-    if(time<=0) endGame();
-  },1000);
+    timeEl.textContent = "time: " + time;
+    if (time <= 0) endGame();
+  }, 1000);
 }
 
-function endGame(){
-  running=false;
+function endGame() {
+  running = false;
   clearInterval(moleLoop);
   clearInterval(timeLoop);
   hideMoles();
-  document.getElementById("finalScore").textContent="score: "+score;
-  document.getElementById("end").style.display="flex";
+  document.getElementById("finalScore").textContent = "score: " + score;
+  document.getElementById("end").style.display = "flex";
 }
 
-function restartGame(){
-  document.getElementById("end").style.display="none";
+function restartGame() {
+  document.getElementById("end").style.display = "none";
   startGame();
 }
 
-function showRules(){ document.getElementById("rules").style.display="flex"; }
-function hideRules(){ document.getElementById("rules").style.display="none"; }
+function showRules() {
+  document.getElementById("rules").style.display = "flex";
+}
 
-/* ---------- MOLE LOGIC ---------- */
-function hideMoles(){
-  moles.forEach(m=>{
-    m.userData.vy=-0.02;
-    m.material.map=moleTex;
-    m.scale.set(1.8,1.8,1);
+function hideRules() {
+  document.getElementById("rules").style.display = "none";
+}
+
+/* ---------- MOLE MOTION ---------- */
+
+function hideMoles() {
+  moles.forEach(m => {
+    m.userData.vy = -0.02;
+    m.material.map = moleTex;
+    m.scale.set(1.8, 1.8, 1);
   });
-  active=null;
+  active = null;
 }
 
-function showMole(){
-  if(!running) return;
+function showMole() {
+  if (!running) return;
   hideMoles();
-  active=moles[Math.floor(Math.random()*3)];
-  active.userData.vy=0.04;
+  active = moles[Math.floor(Math.random() * moles.length)];
+  active.userData.vy = 0.04;
 }
 
-function updateMoles(){
-  moles.forEach(m=>{
-    if(m.userData.vy!==0){
-      m.position.y+=m.userData.vy;
-      if(m.position.y>=m.userData.shown||m.position.y<=m.userData.hidden){
-        m.position.y=Math.max(Math.min(m.position.y,m.userData.shown),m.userData.hidden);
-        m.userData.vy=0;
+function updateMoles() {
+  moles.forEach(m => {
+    if (m.userData.vy !== 0) {
+      m.position.y += m.userData.vy;
+      if (m.position.y >= m.userData.shown || m.position.y <= m.userData.hidden) {
+        m.position.y = Math.max(
+          Math.min(m.position.y, m.userData.shown),
+          m.userData.hidden
+        );
+        m.userData.vy = 0;
       }
     }
   });
 }
 
 /* ---------- INPUT ---------- */
-function screenToWorld(x,y){
-  const v=new THREE.Vector3((x/innerWidth)*2-1,-(y/innerHeight)*2+1,0.5);
+
+function screenToWorld(x, y) {
+  const v = new THREE.Vector3(
+    (x / innerWidth) * 2 - 1,
+    -(y / innerHeight) * 2 + 1,
+    0.5
+  );
   v.unproject(camera);
-  const dir=v.sub(camera.position).normalize();
-  const dist=-camera.position.y/dir.y;
+  const dir = v.sub(camera.position).normalize();
+  const dist = -camera.position.y / dir.y;
   return camera.position.clone().add(dir.multiplyScalar(dist));
 }
 
-window.addEventListener("pointerdown",(e)=>{
-  if(!running) return;
-  const p=screenToWorld(e.clientX,e.clientY);
-  hammer.position.set(p.x,1.2,p.z);
-  hammer.rotation.z=-Math.PI/3;
-  hammer.visible=true;
+window.addEventListener("pointerdown", e => {
+  if (!running) return;
 
-  setTimeout(()=>hammer.rotation.z=0,40);
-  setTimeout(()=>hammer.visible=false,120);
+  const p = screenToWorld(e.clientX, e.clientY);
 
-  if(active && active.position.y>0.45){
-    const dx=p.x-active.position.x, dz=p.z-active.position.z;
-    if(dx*dx+dz*dz<=1.05*1.05){
+  hammer.position.set(p.x, 1.2, p.z);
+  hammer.rotation.z = -Math.PI / 3;
+  hammer.visible = true;
+
+  setTimeout(() => hammer.rotation.z = 0, 40);
+  setTimeout(() => hammer.visible = false, 120);
+
+  if (active && active.position.y >= 0.45) {
+    const dx = p.x - active.position.x;
+    const dz = p.z - active.position.z;
+    if (dx * dx + dz * dz <= 1.1 * 1.1) {
       score++;
-      scoreEl.textContent="score: "+score;
-      active.material.map=hitTex;
-      active.scale.set(1.6,1.4,1);
-      setTimeout(hideMoles,180);
+      scoreEl.textContent = "score: " + score;
+      active.material.map = hitTex;
+      setTimeout(hideMoles, 180);
     }
   }
 });
 
 /* ---------- LOOP ---------- */
-function animate(){
+
+function animate() {
   requestAnimationFrame(animate);
   updateMoles();
-  renderer.render(scene,camera);
+  renderer.render(scene, camera);
 }
 animate();
 
-window.addEventListener("resize",()=>{
-  camera.aspect=innerWidth/innerHeight;
+window.addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth,innerHeight);
+  renderer.setSize(innerWidth, innerHeight);
 });
 </script>
+
 </body>
 </html>
