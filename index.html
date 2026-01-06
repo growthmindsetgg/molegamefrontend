@@ -123,7 +123,25 @@
 </div>
 
 <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
-<script src="https://unpkg.com/@farcaster/miniapp-sdk/dist/index.umd.js"></script>
+
+<script>
+/* ---------- FARCASTER SDK SHIM ---------- */
+window.sdk =
+  window.sdk ||
+  window.farcaster?.sdk ||
+  window.parent?.sdk ||
+  window.top?.sdk;
+
+/* ---------- FARCASTER READY ---------- */
+window.addEventListener("load", () => {
+  try {
+    if (window.sdk && window.sdk.actions && window.sdk.actions.ready) {
+      window.sdk.actions.ready();
+    }
+  } catch (e) {}
+});
+</script>
+
 
 <script>
 /* ---------- FARCASTER READY (SAFE, NO GAME CHANGES) ---------- */
