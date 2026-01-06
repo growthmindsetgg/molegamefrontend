@@ -125,40 +125,200 @@
 <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
 <script src="https://unpkg.com/@farcaster/miniapp-sdk/dist/index.umd.js"></script>
 
-<!-- ✅ FARCASTER READY (FINAL, SAFE) -->
 <script>
-  (function () {
-    let done = false;
+/* ---------- FARCASTER READY ---------- */
+window.addEventListener("load", () => {
+  try {
+    if (window.sdk?.actions?.ready) {
+      sdk.actions.ready();
+    }
+  } catch {}
+});
 
-    function tryReady() {
-      if (
-        !done &&
-        window.sdk &&
-        window.sdk.actions &&
-        typeof window.sdk.actions.ready === "function"
-      ) {
-        done = true;
-        window.sdk.actions.ready();
-        console.log("[MiniApp] sdk.actions.ready() called");
-      } else if (!done) {
-        setTimeout(tryReady, 50);
+/* ---------- SPRITES ---------- */
+function tex(svg) {
+  return new THREE.TextureLoader().load(
+    "data:image/svg+xml;base64," + btoa(svg)
+  );
+}
+
+const moleTex = tex(`<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128">
+<ellipse cx="64" cy="80" rx="36" ry="40" fill="#8b5a2b"/>
+<circle cx="52" cy="72" r="4"/>
+<circle cx="76" cy="72" r="4"/>
+<ellipse cx="64" cy="86" rx="6" ry="4"/></svg>`);
+
+const hitTex = tex(`<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128">
+<ellipse cx="64" cy="80" rx="36" ry="40" fill="#8b5a2b"/>
+<line x1="50" y1="70" x2="58" y2="76" stroke="black" stroke-width="3"/>
+<line x1="58" y1="70" x2="50" y2="76" stroke="black" stroke-width="3"/>
+<line x1="70" y1="70" x2="78" y2="76" stroke="black" stroke-width="3"/>
+<line x1="78" y1="70" x2="70" y2="76" stroke="black" stroke-width="3"/>
+<circle cx="64" cy="92" r="6"/></svg>`);
+
+const hammerTex = tex(`<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128">
+<rect x="30" y="20" width="60" height="30" fill="#e53935"/>
+<rect x="58" y="50" width="12" height="60" fill="#ffccbc"/></svg>`);
+
+/* ---------- SCENE ---------- */
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
+camera.position.set(0,6,8);
+camera.lookAt(0,0,0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+document.body.appendChild(renderer.domElement);
+
+function resizeRenderer() {
+  const w = document.documentElement.clientWidth;
+  const h = document.documentElement.clientHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h, false);
+}
+resizeRenderer();
+window.addEventListener("resize", resizeRenderer);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.6));
+const light = new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(12,12),
+  new THREE.MeshStandardMaterial({color:0x4caf50})
+);
+ground.rotation.x = -Math.PI/2;
+scene.add(ground);
+
+/* ---------- MOLES ---------- */
+const moles=[];
+[-3,0,3].forEach(x=>{
+  const hole=new THREE.Mesh(
+    new THREE.CylinderGeometry(1,1,0.2,32),
+    new THREE.MeshStandardMaterial({color:0x000000})
+  );
+  hole.position.set(x,0.1,0);
+  scene.add(hole);
+
+  const m=new THREE.Sprite(new THREE.SpriteMaterial({map:moleTex}));
+  m.scale.set(1.8,1.8,1);
+  m.position.set(x,-0.6,0);
+  m.userData={hidden:-0.6,shown:0.5,vy:0};
+  scene.add(m);
+  moles.push(m);
+});
+
+/* ---------- HAMMER ---------- */
+const hammer=new THREE.Sprite(new THREE.SpriteMaterial({map:hammerTex}));
+hammer.scale.set(1.4,1.4,1);
+hammer.visible=false;
+scene.add(hammer);
+
+/* ---------- GAME STATE ---------- */
+let active=null,score=0,time=30,running=false;
+let moleLoop,timeLoop;
+const scoreEl=document.getElementById("score");
+const timeEl=document.getElementById("time");
+
+/* ---------- GAME FLOW ---------- */
+function startGame(){
+  document.getElementById("menu").style.display="none";
+  score=0; time=30; running=true;
+  scoreEl.textContent="score: 0";
+  timeEl.textContent="time: 30";
+  moleLoop=setInterval(showMole,1000);
+  timeLoop=setInterval(()=>{
+    time--;
+    timeEl.textContent="time: "+time;
+    if(time<=0) endGame();
+  },1000);
+}
+
+function endGame(){
+  running=false;
+  clearInterval(moleLoop);
+  clearInterval(timeLoop);
+  hideMoles();
+  document.getElementById("finalScore").textContent="score: "+score;
+  document.getElementById("end").style.display="flex";
+}
+
+function restartGame(){
+  document.getElementById("end").style.display="none";
+  startGame();
+}
+
+function showRules(){document.getElementById("rules").style.display="flex";}
+function hideRules(){document.getElementById("rules").style.display="none";}
+
+/* ---------- MOLE LOGIC ---------- */
+function hideMoles(){
+  moles.forEach(m=>{
+    m.userData.vy=-0.02;
+    m.material.map=moleTex;
+    m.scale.set(1.8,1.8,1);
+  });
+  active=null;
+}
+function showMole(){
+  if(!running) return;
+  hideMoles();
+  active=moles[Math.floor(Math.random()*3)];
+  active.userData.vy=0.04;
+}
+function updateMoles(){
+  moles.forEach(m=>{
+    if(m.userData.vy!==0){
+      m.position.y+=m.userData.vy;
+      if(m.position.y>=m.userData.shown||m.position.y<=m.userData.hidden){
+        m.position.y=Math.max(Math.min(m.position.y,m.userData.shown),m.userData.hidden);
+        m.userData.vy=0;
       }
     }
+  });
+}
 
-    if (document.readyState === "complete" || document.readyState === "interactive") {
-      tryReady();
-    } else {
-      document.addEventListener("DOMContentLoaded", tryReady);
+/* ---------- INPUT ---------- */
+function screenToWorld(x,y){
+  const v=new THREE.Vector3(
+    (x/renderer.domElement.clientWidth)*2-1,
+    -(y/renderer.domElement.clientHeight)*2+1,
+    0.5
+  );
+  v.unproject(camera);
+  const dir=v.sub(camera.position).normalize();
+  const dist=-camera.position.y/dir.y;
+  return camera.position.clone().add(dir.multiplyScalar(dist));
+}
+
+window.addEventListener("pointerdown",(e)=>{
+  if(!running) return;
+  const p=screenToWorld(e.clientX,e.clientY);
+  hammer.position.set(p.x,1.2,p.z);
+  hammer.rotation.z=-Math.PI/3;
+  hammer.visible=true;
+  setTimeout(()=>hammer.visible=false,120);
+
+  if(active){
+    const dx=p.x-active.position.x;
+    const dz=p.z-active.position.z;
+    if(dx*dx+dz*dz<=1.05*1.05){
+      score++;
+      scoreEl.textContent="score: "+score;
+      active.material.map=hitTex;
+      setTimeout(hideMoles,180);
     }
-  })();
-</script>
+  }
+});
 
-<!-- ⬇️ YOUR GAME CODE (UNCHANGED) -->
-<script>
-  /* everything below this line is EXACTLY your game code */
-  /* I did not change a single line */
-  /* … your existing game script continues here … */
+/* ---------- LOOP ---------- */
+function animate(){
+  requestAnimationFrame(animate);
+  updateMoles();
+  renderer.render(scene,camera);
+}
+animate();
 </script>
-
 </body>
 </html>
