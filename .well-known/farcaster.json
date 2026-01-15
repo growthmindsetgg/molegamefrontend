@@ -23,6 +23,7 @@
     "tagline": "Hit fast. Score higher.",
     "ogTitle": "Mole Smash",
     "ogDescription": "30 seconds. Tap fast. Beat your score.",
-    "ogImageUrl": "https://molesmash-mini.vercel.app/assets/hero.png"
+    "ogImageUrl": "https://molesmash-mini.vercel.app/assets/hero.png",
+    "noindex": true
   }
 }
