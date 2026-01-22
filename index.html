@@ -13,10 +13,22 @@
   <meta property="og:image" content="https://molesmash-mini.vercel.app/assets/hero.png" />
   <meta property="og:url" content="https://molesmash-mini.vercel.app/" />
 
-  <!-- Farcaster Mini App metadata -->
-  <meta property="fc:miniapp" content="true" />
-  <meta property="fc:miniapp:name" content="Mole Smash" />
-  <meta property="fc:miniapp:icon" content="https://molesmash-mini.vercel.app/assets/icon.png" />
+  <!-- Farcaster/Base Mini App embed metadata (required format) -->
+  <meta
+    name="fc:miniapp"
+    content='{
+      "version":"next",
+      "imageUrl":"https://molesmash-mini.vercel.app/assets/hero.png",
+      "button":{
+        "title":"play mole smash",
+        "action":{
+          "type":"launch_frame",
+          "name":"mole smash",
+          "url":"https://molesmash-mini.vercel.app/"
+        }
+      }
+    }'
+  />
 
   <title>Mole Smash</title>
 
@@ -125,22 +137,6 @@
 
 <!-- Libraries -->
 <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
-<script src="https://unpkg.com/@farcaster/miniapp-sdk/dist/index.umd.js"></script>
-
-<!-- SAFE APP READY (IFRAME + BASE APP FRIENDLY) -->
-<script>
-  function appReady() {
-    try {
-      if (window.sdk && window.sdk.actions && window.sdk.actions.ready) {
-        window.sdk.actions.ready();
-      }
-    } catch (e) {}
-  }
-
-  window.addEventListener("load", () => {
-    setTimeout(appReady, 0);
-  });
-</script>
 
 <!-- GAME CODE (UNCHANGED) -->
 <script>
@@ -328,6 +324,17 @@ function animate(){
   renderer.render(scene,camera);
 }
 animate();
+</script>
+
+<!-- BASE APP FRIENDLY READY CALL -->
+<script type="module">
+  import { sdk } from "https://esm.sh/@farcaster/miniapp-sdk";
+
+  try {
+    await sdk.actions.ready();
+  } catch (e) {
+    console.error("mini app ready failed", e);
+  }
 </script>
 
 </body>
