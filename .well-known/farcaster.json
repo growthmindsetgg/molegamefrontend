@@ -4,7 +4,7 @@
     "payload": "eyJkb21haW4iOiJtb2xlc21hc2gtbWluaS52ZXJjZWwuYXBwIn0",
     "signature": "QQ5+llDPNn2ZdnQlVuIUdO+vtcxS4n5ZxwYOKAj2sRwSEpHvTgLdiIr5usSpGxfuY90gi9HVag7CDKkAWOT+qRw="
   },
-  "miniApp": {
+  "miniapp": {
     "version": "1",
     "name": "Mole Smash",
     "subtitle": "30s reflex game",
